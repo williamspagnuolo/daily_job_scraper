@@ -1,0 +1,53 @@
+name: Daily Job Scrape
+
+on:
+  schedule:
+    # 4x per day: 00:00, 06:00, 12:00, 18:00 UTC
+    - cron: "0 0,6,12,18 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install --with-deps chromium
+
+      # Persist the seen-jobs store across runs. Key uses run_id so every run
+      # gets its own save; restore-keys falls back to the most recent cache.
+      - name: Restore seen-jobs cache
+        id: seen-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: .state/seen_jobs.json
+          key: seen-jobs-${{ github.run_id }}
+          restore-keys: |
+            seen-jobs-
+
+      - name: Run scraper
+        env:
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          TZ: UTC
+        run: python -m src.main
+
+      - name: Save seen-jobs cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: .state/seen_jobs.json
+          key: seen-jobs-${{ github.run_id }}

@@ -36,7 +36,10 @@ async def run(dry_run: bool = False, reset_store: bool = False) -> int:
         log.warning("Resetting seen-store \u2014 every job will be treated as new.")
         store._seen.clear()  # noqa: SLF001 \u2014 intentional for --reset-store
 
-    new_jobs = store.filter_new(all_jobs)
+    filtered_jobs = [j for j in all_jobs if matches_location(j)]
+    log.info("Jobs after location filter: %d", len(filtered_jobs))
+
+    new_jobs = store.filter_new(filtered_jobs)
     log.info("New (unseen) jobs: %d", len(new_jobs))
     for j in new_jobs:
         log.info("  [%s] %s \u2014 %s (%s)", j.company, j.title, j.location, j.posted_date or "?")
@@ -49,6 +52,18 @@ async def run(dry_run: bool = False, reset_store: bool = False) -> int:
     send_job_digest(new_jobs, cfg)
     store.save()
     return len(new_jobs)
+
+
+def matches_location(job: Job) -> bool:
+    loc = (job.location or "").lower()
+    title = (job.title or "").lower()
+
+    return (
+        "remote" in loc
+        or "remote" in title
+        or "chicago" in loc
+        or "chicago" in title
+    )
 
 
 def main() -> None:

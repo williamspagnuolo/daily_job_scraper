@@ -25,8 +25,16 @@ SEARCH_URL = (
 _JOB_ID_RE = re.compile(r"jobs/results/(\d+)-")
 
 KEYWORDS = re.compile(
-    r"\b(data scientist|machine learning|\bml\b|\bai\b|artificial intelligence|"
-    r"deep learning|data science|research scientist|applied scientist|generative ai|llm)\b",
+    r"\b("
+    r"data scientist|data science|"
+    r"machine learning|\bml\b|"
+    r"artificial intelligence|\bai\b|"
+    r"deep learning|"
+    r"research scientist|applied scientist|"
+    r"generative ai|llm|"
+    r"data engineer|data engineering|"
+    r"etl|data pipelines?|analytics engineer"
+    r")\b",
     re.IGNORECASE,
 )
 
